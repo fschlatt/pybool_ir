@@ -28,7 +28,7 @@ class Indexer(ABC):
     """
 
     def __init__(self, index_path: Union[Path, str], store_fields: bool = True,
-                 store_termvectors: bool = False, optional_fields: List[str] = None):
+                 store_termvectors: bool = False, optional_fields: List[str] | None = None):
         if not isinstance(index_path, Path):
             index_path = Path(index_path)
         assert isinstance(index_path, Path)
@@ -48,7 +48,7 @@ class Indexer(ABC):
     def retrieve(self, query: str):
         return self.index.search(query, scores=False)
 
-    def add_document(self, doc: Document, optional_fields: Dict[str, Callable[[Document], Any]] = None) -> None:
+    def add_document(self, doc: Document, optional_fields: Dict[str, Callable[[Document], Any]] | None = None) -> None:
         """
         Add a single document to the index. This method is called by bulk_index.
 
