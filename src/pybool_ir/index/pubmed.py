@@ -8,7 +8,7 @@ import os
 import xml.etree.ElementTree as et
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple, Iterable
+from typing import List, Tuple, Iterable, Tuple
 from xml.etree.ElementTree import Element
 
 import lucene
@@ -35,19 +35,19 @@ class PubmedArticle(Document):
                  publication_type: List[str], mesh_heading_list: List[str],
                  mesh_qualifier_list: List[str], mesh_major_heading_list: List[str],
                  supplementary_concept_list: List[str], keyword_list: List[str], **optional_fields):
-        super(PubmedArticle, self).__setattr__("fields", {
-            "id": id,
-            "date": date,
-            "title": title,
-            "abstract": abstract,
-            "publication_type": publication_type,
-            "mesh_heading_list": mesh_heading_list,
-            "mesh_qualifier_list": mesh_qualifier_list,
-            "mesh_major_heading_list": mesh_major_heading_list,
-            "supplementary_concept_list": supplementary_concept_list,
-            "keyword_list": keyword_list
-        })
-        super().__init__(**optional_fields)
+        super(PubmedArticle, self).__init__(
+            id=id,
+            date=date,
+            title=title,
+            abstract=abstract,
+            publication_type=publication_type,
+            mesh_heading_list=mesh_heading_list,
+            mesh_qualifier_list=mesh_qualifier_list,
+            mesh_major_heading_list=mesh_major_heading_list,
+            supplementary_concept_list=supplementary_concept_list,
+            keyword_list=keyword_list,
+            **optional_fields,
+        )
 
     @staticmethod
     def from_hit(hit: Hit):
@@ -325,7 +325,7 @@ def parse_pubmed_article_node(element: Element) -> PubmedArticle:
     chemical_list_el = element.findall("MedlineCitation/ChemicalList/Chemical/NameOfSubstance")
     suppl_mesh_list_el = element.findall("MedlineCitation/SupplMeshList/SupplMeshName")
     return PubmedArticle(
-        id=pmid,
+        docid=pmid,
         date=article_date,
         # date_revised=field_data.YES if article_revised_element is not None else field_data.NO,
         title="".join(element.find("MedlineCitation/Article/ArticleTitle").itertext()),
@@ -418,7 +418,7 @@ class PubmedIndexer(Indexer, SearcherMixin):
             for line in f:
                 yield PubmedArticle.from_json(line)
 
-    def parse_documents(self, baseline_path: Path) -> (Iterable[Document], int):
+    def parse_documents(self, baseline_path: Path) -> Tuple[Iterable[Document], int]:
         total = None
         if baseline_path.is_dir():
             articles = self.read_folder(baseline_path)
