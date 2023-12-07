@@ -86,7 +86,7 @@ def NeuralClassFactory(transformer_model_class: Type[PreTrainedModel]):
 class NeuralIndex:
     def __init__(
         self,
-        index: engine.Indexer,
+        index: engine.indexers.Indexer,
         index_path: Path | str,
         model_name_or_path: Path | str,
         prune_tokens: List[str] | None = None,
