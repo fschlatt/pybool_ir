@@ -402,6 +402,7 @@ class PubmedIndexer(Indexer, SearcherMixin):
         Read a folder of XML files. This method should be used when the PubMed documents are stored in a folder.
         """
         valid_files = [f for f in os.listdir(str(folder)) if not f.startswith(".")]
+        valid_files = sorted(valid_files)
         for file in tqdm(valid_files, desc="folder progress", total=len(valid_files), position=0):
             print(file)
             for article in PubmedIndexer.read_file(folder / file):
