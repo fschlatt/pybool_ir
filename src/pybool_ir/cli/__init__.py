@@ -122,6 +122,61 @@ def pubmed_index(baseline_path: Path, index_path: Path, store_fields: bool):
         ix.bulk_index(Path(baseline_path))
 
 
+@pubmed.command("index_neural")
+@click.option(
+    "-b",
+    "--baseline",
+    "baseline_path",
+    type=click.Path(),
+    multiple=False,
+    required=True,
+    help="location of baseline download"
+)
+@click.option(
+    "-i",
+    "--index",
+    "index_path",
+    type=click.Path(),
+    multiple=False,
+    required=True,
+    help="location to write the lucene index"
+)
+@click.option(
+    "-s",
+    "--store",
+    "store_fields",
+    default=False,
+    type=click.BOOL,
+    multiple=False,
+    required=False,
+    help="whether to store fields or not"
+)
+@click.option(
+    "-m",
+    "--model",
+    "model_name_or_path",
+    type=click.STRING,
+    multiple=False,
+    required=True,
+    help="name or path of the model to use"
+)
+@click.option(
+    "-n",
+    "--neural",
+    "neural_only",
+    default=False,
+    type=click.BOOL,
+    multiple=False,
+    required=False,
+    help="whether to only store the neural index"
+)
+def pubmed_index_neural(baseline_path: Path, index_path: Path, store_fields: bool, model_name_or_path: str, neural_only: bool):
+    from pybool_ir.index.neural import NeuralIndexer
+    with NeuralIndexer(Path(index_path), model_name_or_path, store_fields=store_fields, index_only_neural=neural_only) as ix:
+        ix.bulk_index(Path(baseline_path))
+
+
+
 @ir_datasets.command("index")
 @click.option(
     "-c",
