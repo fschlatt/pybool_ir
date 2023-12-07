@@ -249,7 +249,6 @@ class NeuralIndex:
         self.embeddings.add(embeddings)
 
     def commit(self) -> None:
-        # TODO only save new doc_lengths, i.e. append
         self.doc_lengths.flush()
         self.embeddings.flush()
 
@@ -299,14 +298,15 @@ class NeuralIndexer(PubmedIndexer):
             enumerate(docs), desc="indexing progress", position=1, total=total
         ):
             _docs.append(self.process_document(doc))
-            if (i + 1) % self.batch_size == 0:
-                self.add_documents_neural(_docs)
-                self.neural_index.commit()
-                _docs = []
             if not self.index_only_neural:
                 self.add_document(self.process_document(doc), optional_fields)
-            if (i + 1) % 100_000 == 0 and not self.index_only_neural:
-                self.index.commit()
+            if (i + 1) % self.batch_size == 0:
+                self.add_documents_neural(_docs)
+                _docs = []
+            if (i + 1) % 1_000 == 0:
+                self.neural_index.commit()
+                if not self.index_only_neural:
+                    self.index.commit()
         if _docs:
             self.add_documents_neural(_docs)
             self.neural_index.commit()
