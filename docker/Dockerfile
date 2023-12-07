@@ -33,4 +33,4 @@ RUN cd pylucene/jcc \
     && python setup.py install
 RUN cd pylucene \
     && NUM_FILES=10 make
-RUN pip install pylucene/dist/*.whl lupyne parsedatetime progressbar2 appdirs
+RUN pip install pylucene/dist/*.whl lupyne parsedatetime progressbar2 appdirs transformers ir_datasets ir_measures pyparsing
