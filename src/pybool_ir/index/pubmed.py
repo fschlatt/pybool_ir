@@ -325,7 +325,7 @@ def parse_pubmed_article_node(element: Element) -> PubmedArticle:
     chemical_list_el = element.findall("MedlineCitation/ChemicalList/Chemical/NameOfSubstance")
     suppl_mesh_list_el = element.findall("MedlineCitation/SupplMeshList/SupplMeshName")
     return PubmedArticle(
-        docid=pmid,
+        id=pmid,
         date=article_date,
         # date_revised=field_data.YES if article_revised_element is not None else field_data.NO,
         title="".join(element.find("MedlineCitation/Article/ArticleTitle").itertext()),
