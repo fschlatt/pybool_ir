@@ -27,43 +27,45 @@ D = engine.documents.Document
 assert lucene.getVMEnv() or lucene.initVM()
 
 
-class Embeddings:
-    def __init__(
-        self, embeddings_path: Path, dim: int, dtype: Type = np.float16
-    ) -> None:
-        self.embeddings_path = embeddings_path
+class MemoryMappedArray:
+    def __init__(self, path: Path, dim: int, dtype: Type = np.float16) -> None:
+        self.path = path
         self.dim = dim
         self.dtype = dtype
-        if not embeddings_path.exists():
-            self._embeddings = None
+        if not path.exists():
+            self.array = np.empty((0, dim), dtype=dtype)
         else:
-            file_size = embeddings_path.stat().st_size
-            num_embeddings = file_size // (dim * np.dtype(dtype).itemsize)
-            self._embeddings = np.memmap(
-                embeddings_path, dtype=dtype, shape=(num_embeddings, dim)
-            )
+            file_size = path.stat().st_size
+            if dim:
+                num_elements = file_size // (dim * np.dtype(dtype).itemsize)
+            else:
+                num_elements = file_size // np.dtype(dtype).itemsize
+            if dim:
+                shape = (num_elements, dim)
+            else:
+                shape = (num_elements,)
+            self.array = np.memmap(path, dtype=dtype, shape=shape)
 
-    def add(self, embeddings: np.ndarray) -> "Embeddings":
-        old_shape = self._embeddings.shape[0] if self._embeddings is not None else 0
-        new_embeddings = np.memmap(
-            self.embeddings_path,
+    def add(self, array: np.ndarray) -> "MemoryMappedArray":
+        length = self.array.shape[0] + array.shape[0]
+        if self.dim:
+            shape = (length, self.dim)
+        else:
+            shape = (length,)
+        newarray = np.memmap(
+            self.path,
             dtype=self.dtype,
-            mode="r+" if self.embeddings_path.exists() else "w+",
-            shape=(old_shape + embeddings.shape[0], self.dim),
+            mode="r+" if self.path.exists() else "w+",
+            shape=shape,
         )
-        new_embeddings[old_shape:] = embeddings
-        self._embeddings = new_embeddings
+        newarray[self.array.shape[0] :] = array
+        self.array = newarray
         return self
 
-    def flush(self) -> "Embeddings":
-        if self._embeddings is not None:
-            self._embeddings.flush()
+    def flush(self) -> "MemoryMappedArray":
+        if isinstance(self.array, np.memmap):
+            self.array.flush()
         return self
-
-    def __getitem__(self, idx) -> np.ndarray:
-        if self._embeddings is None:
-            return np.empty((0, self.dim), dtype=self.dtype)
-        return self._embeddings[idx]
 
 
 def NeuralClassFactory(transformer_model_class: Type[PreTrainedModel]):
@@ -109,16 +111,15 @@ class NeuralIndex:
         if not self.index_path.exists():
             print(f"Index {self.index_path} does not exist, creating it now.")
         self.index_path.mkdir(parents=True, exist_ok=True)
-        doc_lengths_path = self.index_path / "doc_lengths.npy"
-        if not doc_lengths_path.exists():
-            np.save(doc_lengths_path, np.array([], dtype=np.int32))
 
-        self.embeddings = Embeddings(
+        self.embeddings = MemoryMappedArray(
             self.index_path / "embeddings.npy",
             dim=self.model.linear.out_features,
             dtype=dtype,
         )
-        self.doc_lengths = np.load(self.index_path / "doc_lengths.npy")
+        self.doc_lengths = MemoryMappedArray(
+            self.index_path / "doc_lengths.npy", 0, np.int32
+        )
 
     def search(self, node: ASTNode, n_hits: int | None = 10) -> Iterable[D]:
         scores = self._search(node)
@@ -171,19 +172,20 @@ class NeuralIndex:
             query_embeddings, p=2, dim=1
         ).half()
         query_embeddings = query_embeddings.cpu().numpy()
-        scores = np.dot(self.embeddings._embeddings, query_embeddings.T)
+        scores = np.dot(self.embeddings.array, query_embeddings.T)
         scores = (scores + 1) * 0.5
-        split_scores = np.split(scores, np.cumsum(self.doc_lengths)[:-1])
+        split_idcs = np.cumsum(self.doc_lengths.array)[:-1].tolist()
+        split_scores = np.split(scores, split_idcs)
         scores = np.array([s.max(0).mean(0) for s in split_scores])
         return scores
 
     @property
     def num_docs(self) -> int:
-        return len(self.doc_lengths)
+        return self.doc_lengths.array.shape[0]
 
     @property
     def num_tokens(self) -> int:
-        return sum(self.doc_lengths)
+        return self.doc_lengths.array.sum()
 
     def load_model(self) -> PreTrainedModel:
         if self.model_name_or_path.is_dir():
@@ -243,16 +245,12 @@ class NeuralIndex:
         embeddings = embeddings[mask]
         embeddings = torch.nn.functional.normalize(embeddings, p=2, dim=1).half()
         embeddings = embeddings.cpu().numpy()
-        self.doc_lengths = np.concatenate([self.doc_lengths, doc_lengths])
-        self.doc_ids.extend(doc_ids)
+        self.doc_lengths.add(doc_lengths)
         self.embeddings.add(embeddings)
 
     def commit(self) -> None:
-        # TODO only save new doc_lengths and doc_ids, i.e. append
-        np.save(self.index_path / "doc_lengths.npy", self.doc_lengths)
-        with open(self.index_path / "doc_ids.txt", "w") as f:
-            f.write("\n".join(self.doc_ids) + "\n")
-
+        # TODO only save new doc_lengths, i.e. append
+        self.doc_lengths.flush()
         self.embeddings.flush()
 
 
