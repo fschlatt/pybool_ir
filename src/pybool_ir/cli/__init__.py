@@ -170,9 +170,18 @@ def pubmed_index(baseline_path: Path, index_path: Path, store_fields: bool):
     required=False,
     help="whether to only store the neural index"
 )
-def pubmed_index_neural(baseline_path: Path, index_path: Path, store_fields: bool, model_name_or_path: str, neural_only: bool):
+@click.option(
+    "--batch_size",
+    "baseline_path",
+    default=64,
+    type=click.INT,
+    multiple=False,
+    required=False,
+    help="number of documents to process at once"
+)
+def pubmed_index_neural(baseline_path: Path, index_path: Path, store_fields: bool, model_name_or_path: str, neural_only: bool, batch_size: int):
     from pybool_ir.index.neural import NeuralIndexer
-    with NeuralIndexer(Path(index_path), model_name_or_path, store_fields=store_fields, index_only_neural=neural_only) as ix:
+    with NeuralIndexer(Path(index_path), model_name_or_path, store_fields=store_fields, index_only_neural=neural_only, batch_size=batch_size) as ix:
         ix.bulk_index(Path(baseline_path))
 
 
