@@ -172,7 +172,7 @@ def pubmed_index(baseline_path: Path, index_path: Path, store_fields: bool):
 )
 @click.option(
     "--batch_size",
-    "baseline_path",
+    "batch_size",
     default=64,
     type=click.INT,
     multiple=False,
