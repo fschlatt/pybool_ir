@@ -9,8 +9,6 @@ import click
 from tqdm.auto import tqdm
 
 import pybool_ir
-from pybool_ir.index.generic import GenericSearcher
-from pybool_ir.query import GenericQueryParser
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -208,6 +206,8 @@ def ir_datasets_index(collection_name: str, index_path: Path, store_fields: bool
 def ir_datasets_experiment(collection_name: str, index_path: Path, run_path: Path, evaluation_measures: List[str]):
     from pybool_ir.experiments.collections import load_collection
     from pybool_ir.experiments.retrieval import RetrievalExperiment
+    from pybool_ir.index.generic import GenericSearcher
+    from pybool_ir.query import GenericQueryParser
     import ir_measures
     possible_measures = ir_measures.measures.registry
     chosen_measures = []
