@@ -297,9 +297,12 @@ class NeuralIndexer(PubmedIndexer):
         for i, doc in tqdm(
             enumerate(docs), desc="indexing progress", position=1, total=total
         ):
-            _docs.append(self.process_document(doc))
+            doc = self.process_document(doc)
+            if i in self.index:
+                continue
+            _docs.append(doc)
             if not self.index_only_neural:
-                self.add_document(self.process_document(doc), optional_fields)
+                self.add_document(doc, optional_fields)
             if (i + 1) % self.batch_size == 0:
                 self.add_documents_neural(_docs)
                 _docs = []
