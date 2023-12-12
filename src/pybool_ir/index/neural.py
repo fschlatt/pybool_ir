@@ -346,6 +346,8 @@ class NeuralIndexer(PubmedIndexer):
             prune_tokens=self.prune_tokens,
             dtype=self.dtype,
         )
+        if self.neural_index.num_docs != self.index.maxDoc():
+            raise RuntimeError("neural index and lucene index do not match")
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
