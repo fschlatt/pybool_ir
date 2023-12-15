@@ -306,15 +306,14 @@ class NeuralIndexer(PubmedIndexer):
             if (i + 1) % self.batch_size == 0:
                 self.add_documents_neural(_docs)
                 _docs = []
-            if (i + 1) % 1_000 == 0:
                 self.neural_index.commit()
                 if not self.index_only_neural:
                     self.index.commit()
         if _docs:
             self.add_documents_neural(_docs)
             self.neural_index.commit()
-        if not self.index_only_neural:
-            self.index.commit()
+            if not self.index_only_neural:
+                self.index.commit()
 
     def retrieve(self, query: str):
         return self.neural_index.search(query, scores=False)
