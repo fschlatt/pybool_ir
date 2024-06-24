@@ -1,5 +1,5 @@
 .DS_Store
-ant/
+ant*
 pybool_ir.egg-info/
 
 .idea/
@@ -7,7 +7,7 @@ pybool_ir.egg-info/
 .pytest_cache
 build
 hyperbool.egg-info
-pylucene
+pylucene*
 scratch
 test_data
 .eggs
