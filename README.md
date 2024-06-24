@@ -52,7 +52,7 @@ Typical retrieval experiment. Note that there are many more arguments that one c
 ```python
 from pybool_ir.experiments.collections import load_collection
 from pybool_ir.experiments.retrieval import RetrievalExperiment
-from pybool_ir.pubmed.index import PubmedIndexer
+from pybool_ir.index.pubmed import PubmedIndexer
 from ir_measures import *
 import ir_measures
 
@@ -71,7 +71,7 @@ It's also possible to do more ad hoc retrieval experiments.
 
 ```python
 from pybool_ir.experiments.retrieval import AdHocExperiment
-from pybool_ir.pubmed.index import PubmedIndexer
+from pybool_ir.index.pubmed import PubmedIndexer
 
 with AdHocExperiment(PubmedIndexer(index_path="pubmed"), raw_query="headache[tiab]") as experiment:
     print(experiment.count())

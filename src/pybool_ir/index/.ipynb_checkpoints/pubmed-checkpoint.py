@@ -8,7 +8,7 @@ import os
 import xml.etree.ElementTree as et
 from datetime import datetime
 from pathlib import Path
-from typing import List, Tuple, Iterable, Tuple
+from typing import List, Tuple, Iterable
 from xml.etree.ElementTree import Element
 
 import lucene
@@ -401,7 +401,6 @@ class PubmedIndexer(Indexer, SearcherMixin):
         Read a folder of XML files. This method should be used when the PubMed documents are stored in a folder.
         """
         valid_files = [f for f in os.listdir(str(folder)) if not f.startswith(".")]
-        valid_files = sorted(valid_files)
         for file in tqdm(valid_files, desc="folder progress", total=len(valid_files), position=0):
             print(file)
             for article in PubmedIndexer.read_file(folder / file):
@@ -418,7 +417,7 @@ class PubmedIndexer(Indexer, SearcherMixin):
             for line in f:
                 yield PubmedArticle.from_json(line)
 
-    def parse_documents(self, baseline_path: Path) -> Tuple[Iterable[Document], int]:
+    def parse_documents(self, baseline_path: Path) -> (Iterable[Document], int):
         total = None
         if baseline_path.is_dir():
             articles = self.read_folder(baseline_path)

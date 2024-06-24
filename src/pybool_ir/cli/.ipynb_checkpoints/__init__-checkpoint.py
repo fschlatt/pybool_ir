@@ -9,6 +9,8 @@ import click
 from tqdm.auto import tqdm
 
 import pybool_ir
+from pybool_ir.index.generic import GenericSearcher
+from pybool_ir.query import GenericQueryParser
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -122,70 +124,6 @@ def pubmed_index(baseline_path: Path, index_path: Path, store_fields: bool):
         ix.bulk_index(Path(baseline_path))
 
 
-@pubmed.command("index_neural")
-@click.option(
-    "-b",
-    "--baseline",
-    "baseline_path",
-    type=click.Path(),
-    multiple=False,
-    required=True,
-    help="location of baseline download"
-)
-@click.option(
-    "-i",
-    "--index",
-    "index_path",
-    type=click.Path(),
-    multiple=False,
-    required=True,
-    help="location to write the lucene index"
-)
-@click.option(
-    "-s",
-    "--store",
-    "store_fields",
-    default=False,
-    type=click.BOOL,
-    multiple=False,
-    required=False,
-    help="whether to store fields or not"
-)
-@click.option(
-    "-m",
-    "--model",
-    "model_name_or_path",
-    type=click.STRING,
-    multiple=False,
-    required=True,
-    help="name or path of the model to use"
-)
-@click.option(
-    "-n",
-    "--neural",
-    "neural_only",
-    default=False,
-    type=click.BOOL,
-    multiple=False,
-    required=False,
-    help="whether to only store the neural index"
-)
-@click.option(
-    "--batch_size",
-    "batch_size",
-    default=64,
-    type=click.INT,
-    multiple=False,
-    required=False,
-    help="number of documents to process at once"
-)
-def pubmed_index_neural(baseline_path: Path, index_path: Path, store_fields: bool, model_name_or_path: str, neural_only: bool, batch_size: int):
-    from pybool_ir.index.neural import NeuralIndexer
-    with NeuralIndexer(Path(index_path), model_name_or_path, store_fields=store_fields, index_only_neural=neural_only, batch_size=batch_size) as ix:
-        ix.bulk_index(Path(baseline_path))
-
-
-
 @ir_datasets.command("index")
 @click.option(
     "-c",
@@ -270,8 +208,6 @@ def ir_datasets_index(collection_name: str, index_path: Path, store_fields: bool
 def ir_datasets_experiment(collection_name: str, index_path: Path, run_path: Path, evaluation_measures: List[str]):
     from pybool_ir.experiments.collections import load_collection
     from pybool_ir.experiments.retrieval import RetrievalExperiment
-    from pybool_ir.index.generic import GenericSearcher
-    from pybool_ir.query import GenericQueryParser
     import ir_measures
     possible_measures = ir_measures.measures.registry
     chosen_measures = []
